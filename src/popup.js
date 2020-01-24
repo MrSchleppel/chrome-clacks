@@ -15,7 +15,7 @@ chrome.tabs.query(
                 document.getElementById("text").textContent = "";
 
                 var letterIndex = 0;
-                var interval = 666;
+                var interval = 450;
                 bg.restartAnimation(clacks, tabId);
                 textAnimation = setInterval(function() {
                     document.getElementById("text").textContent += clacks[letterIndex];
