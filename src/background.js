@@ -1,9 +1,6 @@
-var DEBUG = false;
-
-// Create data store
 var clacks = {};
+var animation;
 
-// return clacks headers, called by popup to get them for display
 function getClacks(tabId) {
     return clacks[tabId];
 };
@@ -14,53 +11,55 @@ function extinguishClacksIcon(tabId) {
         {
             "tabId": tabId,
             "path": {
-                "19": chrome.extension.getURL("images/melanie_icon19_disabled.png"),
-                "38": chrome.extension.getURL("images/melanie_icon38_disabled.png")
+                "19": chrome.extension.getURL("images/Clacks19/Clacks-Blank-small.png"),
+                "38": chrome.extension.getURL("images/Clacks38/Clacks-Blank.png")
             }
         });
 }
 
-function illuminateClacksIcon(tabId) {
-    chrome.pageAction.show(tabId)
-    chrome.pageAction.setIcon(
-        {
-            "tabId": tabId,
-            "path": {
-                "19": chrome.extension.getURL("images/melanie_icon19.png"),
-                "38": chrome.extension.getURL("images/melanie_icon38.png")
-            }
-        });
+function illuminateClacksIcon(clacks, tabId) {
+    clearInterval(animation);
+    chrome.pageAction.show(tabId);
+    var letterIndex = 0;
+    var interval = 1000;
+
+    animation = setInterval(function() {
+        if (letterIndex == clacks.length) _str = "Blank";
+        else if (clacks[letterIndex] == ' ') _str = "SPACE";
+        else if(clacks[letterIndex]) _str = clacks[letterIndex].toUpperCase();
+
+        chrome.pageAction.setIcon(
+            {
+                "tabId": tabId,
+                "path": {
+                    "19": chrome.extension.getURL("images/Clacks19/Clacks-" + _str + "-small.png"),
+                    "38": chrome.extension.getURL("images/Clacks38/Clacks-" + _str + ".png")
+                }
+            });
+
+        letterIndex++;
+        if (letterIndex > clacks.length) letterIndex = 0;
+    }, interval);
+    
 }
 
 
-// The main listener to check each request's headers for clacks
 chrome.webRequest.onCompleted.addListener(
     function(details) {
         var newClacks,
-            // match case-insensitive, with or without 'X-' prefix
             pattern = /^(X-)?(Clacks-Overhead)$/i;
 
-        // ignore background requests (where tabId === -1)
         if (details.tabId >= 0) {
 
-            // get response headers and store those tagged as "Clacks-Overhead"
-            // or "X-Clacks-Overhead"
             newClacks = details.responseHeaders.filter(function(header) {
                     return pattern.test(header.name);
                 }).map(function(header) {
                     return header.value;
                 }).join("\n");
 
-            // if there are any Clacks-Overhead headers.
             if (newClacks) {
-                // Store the resulting string under its tab's ID.
-                // N.B. though it displays multiple messages from one request, separate
-                // requests from one page load can still overwrite each other.
-                // Note from Pete: I've change += to just = to stop it repeating itself.
-                // - related to premature deletion? - don't think so...
                 clacks[details.tabId] = newClacks;
-                illuminateClacksIcon(details.tabId);
-                if (DEBUG) console.log("store");
+                illuminateClacksIcon(newClacks, details.tabId);
             }
         }
     },
@@ -68,7 +67,7 @@ chrome.webRequest.onCompleted.addListener(
     ["responseHeaders"]
 );
 
-// clear clacks on navigation to a new page
+
 chrome.webNavigation.onCommitted.addListener(
     function(details) {
         if (details.transitionType !== "auto_subframe") {
@@ -78,7 +77,7 @@ chrome.webNavigation.onCommitted.addListener(
     }
 );
 
-// listen to messages from content scripts
+
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         var tabId = sender.tab.id;
@@ -88,23 +87,12 @@ chrome.runtime.onMessage.addListener(
             else clacks[tabId] = request.clacks;
         }
 
-        // if there is a clacks entry for the loaded tab, show icon for that tab.
-        if (clacks[tabId]) illuminateClacksIcon(tabId);
-        // if (DEBUG) console.log("shown: ", shown[tabId]);
+        if (clacks[tabId]) illuminateClacksIcon(clacks, tabId);
 });
 
-// Keeps the data store clean by deleting entries for tabs when they are closed.
+
 chrome.tabs.onRemoved.addListener(function (tabId) {
     if (clacks[tabId]) {
         delete clacks[tabId];
     }
 });
-
-// Possible code for filtering duplicate strings
-// function uniqueStrings(list) {
-//     var set = {}, i;
-//     for (i in list) {
-//         set[list[i]] = true;
-//     }
-//     return Object.keys(set);
-// }
