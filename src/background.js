@@ -24,6 +24,7 @@ function illuminateClacksIcon(clacks, tabId) {
     var interval = 666;
 
     animation = setInterval(function() {
+        var _str = "Blank";
         if (letterIndex == clacks.length) _str = "Blank";
         else if (clacks[letterIndex] == ' ') _str = "SPACE";
         else if(clacks[letterIndex]) _str = clacks[letterIndex].toUpperCase();
