@@ -6,15 +6,7 @@ function getClacks(tabId) {
 };
 
 function extinguishClacksIcon(tabId) {
-    chrome.pageAction.hide(tabId)
-    chrome.pageAction.setIcon(
-        {
-            "tabId": tabId,
-            "path": {
-                "19": chrome.extension.getURL("images/Clacks19/Clacks-Blank-small.png"),
-                "38": chrome.extension.getURL("images/Clacks38/Clacks-Blank.png")
-            }
-        });
+    clearInterval(animation);
 }
 
 function illuminateClacksIcon(clacks, tabId) {
@@ -85,6 +77,7 @@ chrome.webNavigation.onCommitted.addListener(
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
+        if(animation) return;
         var tabId = sender.tab.id;
 
         if (request.clacks) {
@@ -98,6 +91,7 @@ chrome.runtime.onMessage.addListener(
 
 chrome.tabs.onRemoved.addListener(function (tabId) {
     if (clacks[tabId]) {
+        extinguishClacksIcon(tabId);
         delete clacks[tabId];
     }
 });
