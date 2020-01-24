@@ -21,7 +21,7 @@ function illuminateClacksIcon(clacks, tabId) {
     clearInterval(animation);
     chrome.pageAction.show(tabId);
     var letterIndex = 0;
-    var interval = 1000;
+    var interval = 666;
 
     animation = setInterval(function() {
         if (letterIndex == clacks.length) _str = "Blank";
@@ -43,6 +43,10 @@ function illuminateClacksIcon(clacks, tabId) {
     
 }
 
+function restartAnimation(clacks, tabId){
+    clearInterval(animation);
+    illuminateClacksIcon(clacks, tabId);
+}
 
 chrome.webRequest.onCompleted.addListener(
     function(details) {
